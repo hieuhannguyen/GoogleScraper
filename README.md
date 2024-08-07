@@ -1,5 +1,5 @@
 # GOOGLE SCRAPER
-## Version: 1.2.15
+## Version: 1.2.16
 This Python program scrapes Google reviews of interested businesses then query GPT-4o's engine to complete the following sentence: "With customers who rave about {...}, I am sure you receive many emails per week asking to buy your business." 
 
 ### Lastest update
@@ -7,7 +7,8 @@ This Python program scrapes Google reviews of interested businesses then query G
 - Added a token control feature which asks for the user's approval before processing prompts that cost more than 7000 tokens.
 - Fixed problem with scraping certain businesses that have more than 1,000 reviews (the scraped number contains the charater "," which could not be converted into an interger)
 - Added README file.
-- Upload to git as .zip file to maintain folder organizations.
+- Upload to git.
+- Added example inputs and outputs.
 
 ### Prerequisites
 - Python
