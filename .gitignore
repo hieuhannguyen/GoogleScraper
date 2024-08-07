@@ -1,2 +1,3 @@
 # do not commit virtual environment
 .venv
+__pycache__
