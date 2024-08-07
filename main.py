@@ -20,7 +20,7 @@ def main():
   sub.clear()
 
   print("""INFO
-Version: 1.2.16
+Version: 1.2.17
 Last updated: 08/07/2024
 
 INSTRUCTION

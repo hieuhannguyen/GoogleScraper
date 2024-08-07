@@ -280,7 +280,7 @@ class ReviewsScraper:
                 message = 'Successfully Scraped: ' + name
 
             except:
-                review_text = np.NaN
+                review_text = np.nan
                 message = 'Failed to Scrape: ' + name
 
             # Print Confirmation
