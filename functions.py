@@ -142,9 +142,6 @@ class RatingsScraper:
     def scrape(self, name, loc):
         options = ChromeOptions()
         options.add_argument("--headless=new")
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.set_capability("browserVersion", "117")
-        options.add_argument("--log-level=3")
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
         driver.maximize_window()
         tries = 0
@@ -170,7 +167,7 @@ class RatingsScraper:
                 # Extract the Average Star Rating and Number of Reviews
                 rating = rating.split('\n')
                 star = rating[0]
-                numReview = int(rating[1].strip('()').replace(',',""))
+                numReview = rating[1].strip('()')
 
                 # Get the Organization's Maps URL
                 url = driver.current_url
@@ -209,16 +206,12 @@ class ReviewsScraper:
             # Initialize the driver
             options = ChromeOptions()
             options.add_argument("--headless=new")
-            options.add_experimental_option('excludeSwitches', ['enable-logging'])
-            options.set_capability("browserVersion", "117")
-            options.add_argument("--log-level=3")
             driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-
             driver.maximize_window()
             driver.get(url)
 
         except:
-            print('Missing URL. Cannot scrape: '+name)
+            print('Cannot access URL. Cannot scrape: '+name)
             review_text = np.nan
 
         else:
@@ -294,18 +287,51 @@ class ReviewsScraper:
 class s2Prompter:
     def __init__(self, tokenLimit):
         self.tokenLimit = tokenLimit
-        self.model = 'gpt-4o-mini'
+        self.model = 'gpt-4o'
+
+    def promptEngine(self, key, prompt, name):
+        try:
+            client = OpenAI(api_key = key)
+            response = client.chat.completions.create(
+            model= self.model,
+            messages = [
+                {
+                    "role":"user",
+                    "content": prompt
+                }
+            ],
+            max_tokens=self.tokenLimit
+            )
+        except:
+            print(f'Error querying for: {name}\n')
+            target = np.nan
+        else:
+            print(f'Successfully queried for: {name}\n')
+            print(f'Token usage: {response.usage.total_tokens}\n')
+            sentence = response.choices[0].message.content.strip()
+
+            startInd = sentence.find('about') + 6
+            endInd = sentence.find(', I')
+            target = sentence[startInd:endInd].strip()
+
+            # Handles "their"
+            if target.find('their') != -1:
+                target = target.replace('their', 'the')
+            # Handles mentioning of company names
+            if target.find(name) != -1:
+                target = target.replace(name, 'your company')
 
     def prompting(self, apikey, name, reviewList):
         prompt = f"The business is '{name}' and the following Python list include the business's reviews from customers: {reviewList}\n Replace '[string]' in the following sentence with specific information from the reviews: 'With customers who rave about [string], I am sure you receive many emails per week asking to buy [business name].' Make sure the output sentence is grammatically correct and professional."
         tc = TokenCount(model_name= self.model)
         tokens = tc.num_tokens_from_string(prompt)
         if tokens >= 7000:
-            print(f"""\nThe token count for {name} will exceed 9000 tokens. Continue?
+            print(f"""\nThe token count for {name} will exceed {tokens} tokens. Continue?
 1. Yes
 2. No. Please skip this organization.\n""")
-            userchoice = intCheck[1,2]
-            if userchoice ==1:
+            userchoice = intCheck([1,2])
+
+            if userchoice == 1:
                 pass
             else:
                 return np.nan
@@ -340,7 +366,6 @@ class s2Prompter:
             if target.find(name) != -1:
                 target = target.replace(name, 'your company')
         return target
-
 
 class Settings:
     def __init__(self):
@@ -434,6 +459,8 @@ def mainActions(organizationDF):
             else:
                 pass
             finally:
+                clear()
+                goBack()
                 results = organizationDF.apply(lambda row: scraper.scrape(row['Name'], row['Location']), axis=1)
                 cols = ['Star Ratings', 'Number of Reviews', 'Google Maps URL']
                 organizationDF = concatDF(organizationDF, results, cols)
@@ -452,6 +479,8 @@ def mainActions(organizationDF):
             else:
                 pass
             finally:
+                clear()
+                goBack()
                 scraper = ReviewsScraper(setting.waitTime, setting.scrollLimit)
                 organizationDF['Reviews'] = organizationDF.apply(lambda row: scraper.scrape(row['Name'], row['Google Maps URL']), axis=1)
                 organizationDF = extraction(organizationDF, 'reviews')
@@ -469,8 +498,11 @@ def mainActions(organizationDF):
             else:
                 pass
             finally:
+                clear()
                 prompter = s2Prompter(setting.tokenLimit)
-                key = input('\nEnter your API key: ').strip()
+                key = input('Enter your API key: ').strip()
+                clear()
+                print('Please wait to initialize sentiment analysis...\n')
                 organizationDF['Email Phrase'] = organizationDF.apply(lambda row: prompter.prompting(key, row['Name'], row['Reviews']), axis=1)
                 organizationDF = extraction(organizationDF,'sentiment')
         elif choice == 4:

@@ -20,9 +20,9 @@ def main():
   sub.clear()
 
   print("""INFO
-Version: 1.2.17
-Last updated: 08/07/2024
-
+Version: 1.3.0
+Last updated: 08/08/2024
+1
 INSTRUCTION
         
 You will interact with the program by choosing a number among a list of options. When prompted, type in the number
