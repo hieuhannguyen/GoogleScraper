@@ -1,11 +1,12 @@
 # GOOGLE SCRAPER
-## Version: 1.3.0
+## Version: 1.3.1
 This Python program scrapes Google reviews of interested businesses then query GPT-4o's engine to complete the following sentence: "With customers who rave about {...}, I am sure you receive many emails per week asking to buy your business." 
 
 ### Lastest update
 - Updated scrapers for Mac compatibility
 - Updated token warning message
 - Updated waiting interface when conducting analysis
+- Added emphasis on not including proper nouns in GPT's response
 
 ### Prerequisites
 - Python

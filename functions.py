@@ -16,6 +16,7 @@ from datetime import datetime
 from openai import OpenAI
 from token_count import TokenCount
 
+
 def clear():
     os.system('cls' if os.name=='nt' else 'clear')
 
@@ -287,42 +288,21 @@ class ReviewsScraper:
 class s2Prompter:
     def __init__(self, tokenLimit):
         self.tokenLimit = tokenLimit
-        self.model = 'gpt-4o'
-
-    def promptEngine(self, key, prompt, name):
-        try:
-            client = OpenAI(api_key = key)
-            response = client.chat.completions.create(
-            model= self.model,
-            messages = [
-                {
-                    "role":"user",
-                    "content": prompt
-                }
-            ],
-            max_tokens=self.tokenLimit
-            )
-        except:
-            print(f'Error querying for: {name}\n')
-            target = np.nan
-        else:
-            print(f'Successfully queried for: {name}\n')
-            print(f'Token usage: {response.usage.total_tokens}\n')
-            sentence = response.choices[0].message.content.strip()
-
-            startInd = sentence.find('about') + 6
-            endInd = sentence.find(', I')
-            target = sentence[startInd:endInd].strip()
-
-            # Handles "their"
-            if target.find('their') != -1:
-                target = target.replace('their', 'the')
-            # Handles mentioning of company names
-            if target.find(name) != -1:
-                target = target.replace(name, 'your company')
+        self.model = 'gpt-4o-mini'
 
     def prompting(self, apikey, name, reviewList):
-        prompt = f"The business is '{name}' and the following Python list include the business's reviews from customers: {reviewList}\n Replace '[string]' in the following sentence with specific information from the reviews: 'With customers who rave about [string], I am sure you receive many emails per week asking to buy [business name].' Make sure the output sentence is grammatically correct and professional."
+
+        # generate the prompt
+        prompt = f"The business is '{name}' and the following Python list include\
+              the business's reviews from customers: {reviewList}\
+                \n Without using proper nons, replace '[string]' in the following sentence \
+                with specific information from the reviews: 'With customers who rave about \
+                [string], I am sure you receive many emails per week asking to \
+                buy [business name].' Refrain from including proper nouns in [string].\
+                Make sure the output sentence is grammatically correct and professional. \
+                Once again, exclude proper nouns from [string]."
+        
+        # get the input token count
         tc = TokenCount(model_name= self.model)
         tokens = tc.num_tokens_from_string(prompt)
         if tokens >= 7000:
@@ -362,9 +342,7 @@ class s2Prompter:
             # Handles "their"
             if target.find('their') != -1:
                 target = target.replace('their', 'the')
-            # Handles mentioning of company names
-            if target.find(name) != -1:
-                target = target.replace(name, 'your company')
+
         return target
 
 class Settings:
