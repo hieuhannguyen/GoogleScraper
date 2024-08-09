@@ -352,7 +352,7 @@ class s2Prompter:
 class Settings:
     def __init__(self):
         self.waitTime = 7
-        self.maxTries = 3
+        self.maxTries = 1
         self.scrollLimit = 20
         self.tokenLimit = 1000
     def changeWaitTime(self,newWaitTime):
@@ -395,11 +395,19 @@ def concatDF(organizationDF, results, cols):
 
 def extraction(organizationDF, process):
     clear()
-    failed = organizationDF[organizationDF.isna().any(axis=1)]
-    organizationDF = organizationDF.dropna(axis=0,how="any", ignore_index=True)
+    if process=="ratings":
+        failed=organizationDF[organizationDF['Google Maps URL'].isna()]
+    elif process=="reviews":
+        failed=organizationDF[organizationDF['Reviews'].isna()]
+    else:
+        failed=organizationDF[organizationDF['Email Phrases'].isna()]
+    if failed.empty:
+        pass
+    else:
+        organizationDF=pd.merge(organizationDF, failed, indicator=True, how='outer').query('_merge=="left_only"').drop('_merge', axis=1)
     print("Scrape Complete.\n")
     print("Scraped file preview:")
-    print(organizationDF.head(3))
+    print(organizationDF.head(5))
     version = datetime.now().strftime("%m%d%H%M")
     outputName = process+'_'+version+'.csv'
     organizationDF.to_csv('./output/'+outputName, index=False)
@@ -418,7 +426,7 @@ def mainActions(organizationDF):
     while True:
         clear()
         print('Preview: ')
-        print(organizationDF)
+        print(organizationDF.head(5))
         print('''\nWhat do you want to do with this file?
 1. Scrape Google Maps Ratings and URL
 2. Scrape Google Reviews (file must contain google Maps URLs)
@@ -430,10 +438,10 @@ def mainActions(organizationDF):
         if choice == 1:
             scraper = RatingsScraper(setting.waitTime, setting.maxTries)
             try:
-                organizationDF[['Name', 'Location']].isnull()
+                organizationDF[['Firm Name', 'Location']].isnull()
             except:
                 try:
-                    organizationDF = selectColumn(organizationDF,['Name', 'Location'])
+                    organizationDF = selectColumn(organizationDF,['Firm Name', 'Location'])
                 except:
                     break
                 else:
@@ -442,18 +450,17 @@ def mainActions(organizationDF):
                 pass
             finally:
                 clear()
-                goBack()
-                results = organizationDF.apply(lambda row: scraper.scrape(row['Name'], row['Location']), axis=1)
+                results = organizationDF.apply(lambda row: scraper.scrape(row['Firm Name'], row['Location']), axis=1)
                 cols = ['Star Ratings', 'Number of Reviews', 'Google Maps URL']
                 organizationDF = concatDF(organizationDF, results, cols)
                 organizationDF = extraction(organizationDF, 'ratings')
         elif choice ==2:
             scraper = ReviewsScraper(setting.waitTime, setting.scrollLimit)
             try:
-                organizationDF[['Name', 'Google Maps URL']].isnull()
+                organizationDF[['Firm Name', 'Google Maps URL']].isnull()
             except:
                 try:
-                    organizationDF = selectColumn(organizationDF,['Name', 'Google Maps URL'])
+                    organizationDF = selectColumn(organizationDF,['Firm Name', 'Google Maps URL'])
                 except:
                     break
                 else:
@@ -462,17 +469,16 @@ def mainActions(organizationDF):
                 pass
             finally:
                 clear()
-                goBack()
                 scraper = ReviewsScraper(setting.waitTime, setting.scrollLimit)
-                organizationDF['Reviews'] = organizationDF.apply(lambda row: scraper.scrape(row['Name'], row['Google Maps URL']), axis=1)
+                organizationDF['Reviews'] = organizationDF.apply(lambda row: scraper.scrape(row['Firm Name'], row['Google Maps URL']), axis=1)
                 organizationDF = extraction(organizationDF, 'reviews')
         elif choice == 3:
             clear()
             try:
-                organizationDF[['Name', 'Reviews']].isnull()
+                organizationDF[['Firm Name', 'Reviews']].isnull()
             except:
                 try:
-                    organizationDF = selectColumn(organizationDF,['Name', 'Reviews'])
+                    organizationDF = selectColumn(organizationDF,['Firm Name', 'Reviews'])
                 except:
                     break
                 else:
@@ -485,7 +491,7 @@ def mainActions(organizationDF):
                 key = input('Enter your API key: ').strip()
                 clear()
                 print('Please wait to initialize sentiment analysis...\n')
-                organizationDF['Email Phrase'] = organizationDF.apply(lambda row: prompter.prompting(key, row['Name'], row['Reviews']), axis=1)
+                organizationDF['Email Phrase'] = organizationDF.apply(lambda row: prompter.prompting(key, row['Firm Name'], row['Reviews']), axis=1)
                 organizationDF = extraction(organizationDF,'sentiment')
         elif choice == 4:
             while True:
