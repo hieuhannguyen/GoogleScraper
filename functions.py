@@ -329,19 +329,23 @@ class s2Prompter:
             )
         except:
             print(f'Error querying for: {name}\n')
-            target = np.nan
+            target=np.nan
         else:
             print(f'Successfully queried for: {name}\n')
             print(f'Token usage: {response.usage.total_tokens}\n')
-            sentence = response.choices[0].message.content.strip()
+            sentence=response.choices[0].message.content.strip()
 
-            startInd = sentence.find('about') + 6
-            endInd = sentence.find(', I')
-            target = sentence[startInd:endInd].strip()
+            startInd=sentence.find('about') + 6
+            endInd=sentence.find(', I')
+            target=sentence[startInd:endInd].strip()
 
             # Handles "their"
             if target.find('their') != -1:
-                target = target.replace('their', 'the')
+                target=target.replace('their', 'the')
+
+            # Handles mentioning of company's name
+            if target.find(name) != -1:
+                target=target.replace(name,'your team')
 
         return target
 
