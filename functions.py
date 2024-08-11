@@ -142,7 +142,7 @@ class RatingsScraper:
 
     def scrape(self, name, loc):
         options = ChromeOptions()
-        options.add_argument("--headless=new")
+        #options.add_argument("--headless=new")
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
         driver.maximize_window()
         tries = 0
@@ -351,8 +351,8 @@ class s2Prompter:
 
 class Settings:
     def __init__(self):
-        self.waitTime = 7
-        self.maxTries = 1
+        self.waitTime = 2
+        self.maxTries = 0
         self.scrollLimit = 20
         self.tokenLimit = 1000
     def changeWaitTime(self,newWaitTime):
@@ -455,7 +455,6 @@ def mainActions(organizationDF):
                 organizationDF = concatDF(organizationDF, results, cols)
                 organizationDF = extraction(organizationDF, 'ratings')
         elif choice ==2:
-            scraper = ReviewsScraper(setting.waitTime, setting.scrollLimit)
             try:
                 organizationDF[['Firm Name', 'Google Maps URL']].isnull()
             except:
