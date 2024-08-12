@@ -5,8 +5,8 @@ def main():
   sub.clear()
 
   print("""INFO
-Version: 1.3.1
-Last updated: 08/08/2024
+Version: 1.4.0
+Last updated: 08/12/2024
 
 INSTRUCTION
         

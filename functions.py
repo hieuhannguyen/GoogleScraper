@@ -30,6 +30,7 @@ def intCheck(optionList):
             inputStr = int(inputStr)
         except:
             print('Only numbers accepted. Try again.\n')
+            continue
         else:
             if inputStr not in optionList:
                 print(f'Invalid input. Choose one option among {str(optionList)}. Try again.\n')
@@ -136,58 +137,49 @@ def mainMenu():
 
 
 class RatingsScraper:
-    def __init__(self, waitTime, tries):
+    def __init__(self, waitTime):
         self.waitTime = waitTime
-        self.maxTries = tries
 
     def scrape(self, name, loc):
         options = ChromeOptions()
-        #options.add_argument("--headless=new")
+        options.add_argument("--headless=new")
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
         driver.maximize_window()
-        tries = 0
-        while tries <= self.maxTries:
-            driver.get('https://www.google.com/maps')
+        driver.get('https://www.google.com/maps')
 
-            try:
-                # Locate the Search Bar
-                searchinput = WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located((By.XPATH, "//input[@class = 'fontBodyMedium searchboxinput xiQnY ']"))
-                    )
+        try:
+            # Locate the Search Bar
+            searchinput = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@class = 'fontBodyMedium searchboxinput xiQnY ']"))
+                )
 
-                # Search the Organization
-                searchinput.send_keys(name+' '+loc)
-                searchinput.send_keys(Keys.ENTER)
-                time.sleep(self.waitTime)
+            # Search the Organization
+            searchinput.send_keys(name+' '+loc)
+            searchinput.send_keys(Keys.ENTER)
+            time.sleep(self.waitTime)
 
-                # Locate the Star Rating
-                rating = WebDriverWait(driver, 30).until(
-                    EC.visibility_of_element_located((By.XPATH, "//div[@class = 'F7nice ']"))
-                    ).text
+            # Locate the Star Rating
+            rating = WebDriverWait(driver, 30).until(
+                EC.visibility_of_element_located((By.XPATH, "//div[@class = 'F7nice ']"))
+                ).text
 
-                # Extract the Average Star Rating and Number of Reviews
-                rating = rating.split('\n')
-                star = rating[0]
-                numReview = rating[1].strip('()')
+            # Extract the Average Star Rating and Number of Reviews
+            rating = rating.split('\n')
+            star = rating[0]
+            numReview = rating[1].strip('()')
 
-                # Get the Organization's Maps URL
-                url = driver.current_url
+            # Get the Organization's Maps URL
+            url = driver.current_url
 
-                # Confirmation
-                message = 'Successfully Scraped: ' + name
+            # Confirmation
+            message = 'Successfully Scraped: ' + name
 
-            except:
-                message = 'Failed to Scrape: ' + name
-                self.waitTime += 1
-                tries += 1
-                star = np.nan
-                numReview = np.nan
-                url = np.nan
-                continue
-            
-            else:
-                break
-        
+        except:
+            message = 'Failed to Scrape: ' + name
+            star = np.nan
+            numReview = np.nan
+            url = np.nan
+    
         # Quit driver
         driver.quit()
 
@@ -203,12 +195,12 @@ class ReviewsScraper:
         self.scrollLimit = scrollLimit
 
     def scrape(self, name, url):
+        # Initialize the driver
+        options = ChromeOptions()
+        options.add_argument("--headless=new")
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+        driver.maximize_window()
         try:
-            # Initialize the driver
-            options = ChromeOptions()
-            options.add_argument("--headless=new")
-            driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-            driver.maximize_window()
             driver.get(url)
 
         except:
@@ -286,11 +278,14 @@ class ReviewsScraper:
         return review_text
 
 class s2Prompter:
-    def __init__(self, tokenLimit):
+    def __init__(self, tokenLimit, apikey):
         self.tokenLimit = tokenLimit
-        self.model = 'gpt-4o-mini'
+        self.model = 'gpt-4o'
+        self.apikey = apikey
+        if self.apikey == "":
+            self.apikey = input("Enter your API key: ").strip()
 
-    def prompting(self, apikey, name, reviewList):
+    def prompting(self, name, reviewList):
 
         # generate the prompt
         prompt = f"The business is '{name}' and the following Python list include\
@@ -316,7 +311,7 @@ class s2Prompter:
             else:
                 return np.nan
         try:
-            client = OpenAI(api_key = apikey)
+            client = OpenAI(api_key = self.apikey)
             response = client.chat.completions.create(
             model= self.model,
             messages = [
@@ -351,38 +346,50 @@ class s2Prompter:
 
 class Settings:
     def __init__(self):
-        self.waitTime = 2
-        self.maxTries = 0
-        self.scrollLimit = 20
-        self.tokenLimit = 1000
+        file = open("settings.txt", "r")
+        self.settingList = file.read()
+        self.settingList = self.settingList.split(",")
+        file.close()
+        self.waitTime = int(self.settingList[0])
+        self.scrollLimit = int(self.settingList[1])
+        self.tokenLimit = int(self.settingList[2])
+        self.apikey = self.settingList[3]
     def changeWaitTime(self,newWaitTime):
         self.waitTime = newWaitTime
-    def changeMaxTries(self,newMaxTries):
-        self.maxTries = newMaxTries
+        file = open("settings.txt", "w")
+        file.write(f"{self.waitTime},{self.scrollLimit},{self.tokenLimit},{self.apikey}")
+        file.close()
     def changeScrollLimit(self, newLimit):
         self.scrollLimit = newLimit
+        file = open("settings.txt", "w")
+        file.write(f"{self.waitTime},{self.scrollLimit},{self.tokenLimit},{self.apikey}")
+        file.close()
     def changeTokens(self, newLimit):
         self.tokenLimit = newLimit
+        file = open("settings.txt", "w")
+        file.write(f"{self.waitTime},{self.scrollLimit},{self.tokenLimit},{self.apikey}")
+        file.close()
+    def changeAPI(self, newAPI):
+        self.apikey = newAPI
+        file = open("settings.txt", "w")
+        file.write(f"{self.waitTime},{self.scrollLimit},{self.tokenLimit},{self.apikey}")
+        file.close()
 
 def inputStr(settingOption):
-        while True:
-            clear()
-            print('ONLY ENTER VALID INTERGERS\n')
-            inputStr = input(f'New {settingOption}: ').strip()
-            try:
-                inputStr = int(inputStr)
-            except:
-                print('\nOnly enter intergers. Try again.\n')
-                goBack()
+    clear()
+    print('ONLY ENTER VALID INTERGERS\n')
+    while True:
+        inputStr = input(f'New {settingOption}: ').strip()
+        try:
+            inputStr = int(inputStr)
+        except:
+            print('\nOnly enter intergers. Try again.')
+        else:
+            if inputStr <= 0:
+                print('\nImpossible input. Try again.')
             else:
-                if inputStr <= 0:
-                    print('\nImpossible input.\n')
-                    goBack()
-                else:
-                    print('\nThis setting applies until you reupload a file or quit the program.\n')
-                    goBack()
-                    break
-        return inputStr
+                break
+    return inputStr
 
 def concatDF(organizationDF, results, cols):
     for i in range(len(cols)):
@@ -428,15 +435,15 @@ def mainActions(organizationDF):
         print('Preview: ')
         print(organizationDF.head(5))
         print('''\nWhat do you want to do with this file?
-1. Scrape Google Maps Ratings and URL
-2. Scrape Google Reviews (file must contain google Maps URLs)
-3. Conduct sentiment analysis with GPT-4o (file must contain scraped Google reviews)
+1. Step 1: Scrape Google Maps Ratings and URL
+2. Step 2: Scrape Google Reviews (file must contain google Maps URLs)
+3. Step 3: Conduct sentiment analysis with GPT-4o (file must contain scraped Google reviews)
 4. Change settings
 5. Go back to main menu
               ''')
-        choice = intCheck([1,2,3,4,5,6])
+        choice = intCheck([1,2,3,4,5])
         if choice == 1:
-            scraper = RatingsScraper(setting.waitTime, setting.maxTries)
+            scraper = RatingsScraper(setting.waitTime)
             try:
                 organizationDF[['Firm Name', 'Location']].isnull()
             except:
@@ -486,7 +493,7 @@ def mainActions(organizationDF):
                 pass
             finally:
                 clear()
-                prompter = s2Prompter(setting.tokenLimit)
+                prompter = s2Prompter(setting.tokenLimit, setting.apikey)
                 key = input('Enter your API key: ').strip()
                 clear()
                 print('Please wait to initialize sentiment analysis...\n')
@@ -497,14 +504,14 @@ def mainActions(organizationDF):
                     clear()
                     print("Current settings:\n")
                     print('Wait time (in seconds) for scrapers: ', setting.waitTime)
-                    print('Maximum tries to scrape one review: ', setting.maxTries)
                     print('Maximum numbers of reviews to collect per organization: ', setting.scrollLimit*10)
                     print('Maximum output tokens for GPT models: ', setting.tokenLimit)
+                    print('Your API key: ', setting.apikey)
                     print("""\nWhat do you want to do?
 1. Change wait time
-2. Change maximum tries
-3. Change maximum number of reviews
-4. Change GPT's output token limit
+2. Change maximum number of reviews
+3. Change GPT's output token limit
+4. Add API key                        
 5. Go back
                             """)
                     choice = intCheck([1,2,3,4,5])
@@ -512,22 +519,17 @@ def mainActions(organizationDF):
                         newSetting = inputStr('wait time to scrape one review')
                         setting.changeWaitTime(newSetting)
                     elif choice == 2:
-                        newSetting = inputStr('maximum times to re-try when failing to scrape one review')
-                        setting.changeMaxTries(newSetting)
-                    elif choice == 3:
                         newSetting = round((inputStr('maximum number of reviews to collect when scraping one organization')/10))
                         setting.changeScrollLimit(newSetting)
-                    elif choice == 4:
+                    elif choice == 3:
                         newSetting = inputStr('maximum output tokens for GPT models')
                         setting.changeTokens(newSetting)
-                    elif choice == 5:
+                    elif choice == 4:
+                        newSetting = input("Enter your API key: ").strip()
+                        setting.changeAPI(newSetting)
+                    else:
                         clear()
                         break
-                    else:
-                        print('Invalid input. Try again.\n')
-                        continue
-        elif choice == 5:
+        else:
             clear()
             sys.exit(0)
-        else:
-            print('Invalid input. Please try again.\n')
