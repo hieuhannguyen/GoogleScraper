@@ -1,6 +1,7 @@
 # do not commit virtual environment
 .venv
 __pycache__
-input\
-output\
+input/
+output/
 settings.txt
+.DS_Store
