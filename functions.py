@@ -91,27 +91,14 @@ def selectColumn(organizationDF, targetColumns):
     for col in organizationDF.columns:
         print(f'{colIndex}. {col}')
         colIndex+=1
-    print("""\nIs that correct?
-1. Yes.
-2. No.
-          """)
-    userChoice = intCheck([1,2])
-    if userChoice == 2:
-        print(f'''\nCheck your files before trying again. Some suggestions:
-    - Add a row to the top that contains the column names
-    - Edit the first row of your file to the correct names
-    - Reset fonts to default (Calibri) and remove all stylistic formatting
-            ''')
-        goBack()
-    else:
-        for i in targetColumns:
-            print(f'\nWhich column contains the {i} of the target organizations?')
-            colInd = intCheck([i for i in range(1, len(organizationDF.columns)+1)])
-            colInd -=1
-            colName = organizationDF.columns[colInd]
-            organizationDF = organizationDF.rename(columns = {colName:i})
-        print('\nTarget Columns Successfully Identified. Please wait as the program is loading the next step.\n')
-        return organizationDF
+    for i in targetColumns:
+        print(f'\nWhich column contains the {i} of the target organizations?')
+        colInd = intCheck([i for i in range(1, len(organizationDF.columns)+1)])
+        colInd -=1
+        colName = organizationDF.columns[colInd]
+        organizationDF = organizationDF.rename(columns = {colName:i})
+    print('\nTarget Columns Successfully Identified. Please wait as the program is loading the next step.\n')
+    return organizationDF
 
 def mainMenu():
     while True:
@@ -494,10 +481,9 @@ def mainActions(organizationDF):
             finally:
                 clear()
                 prompter = s2Prompter(setting.tokenLimit, setting.apikey)
-                key = input('Enter your API key: ').strip()
                 clear()
                 print('Please wait to initialize sentiment analysis...\n')
-                organizationDF['Email Phrase'] = organizationDF.apply(lambda row: prompter.prompting(key, row['Firm Name'], row['Reviews']), axis=1)
+                organizationDF['Email Phrases'] = organizationDF.apply(lambda row: prompter.prompting(row['Firm Name'], row['Reviews']), axis=1)
                 organizationDF = extraction(organizationDF,'sentiment')
         elif choice == 4:
             while True:
@@ -525,6 +511,7 @@ def mainActions(organizationDF):
                         newSetting = inputStr('maximum output tokens for GPT models')
                         setting.changeTokens(newSetting)
                     elif choice == 4:
+                        clear()
                         newSetting = input("Enter your API key: ").strip()
                         setting.changeAPI(newSetting)
                     else:
