@@ -22,8 +22,10 @@ The program allows user to scrape Google ratings, reviews, and then conduct sent
 The program's functionalities are dependent upon one another:
 - You can scrape Google ratings and URL only if you provide the Names and Locations of interested organizations.
 - You can scrape Google reviews only if you provide the Names and Google URLs of interested organizations.
-- You can appropriately query GPT 4-o only if you provide the Names and Google Reviews of interested organizations.
-To summarize, this is a graphic of the program's logic flow:
+- You can appropriately query GPT 4-o only if you provide the Names and Google Reviews of interested organizations.<br />
+
+To summarize, this is a graphic of the program's logic flow:  
+
 ![Tool Logic Flow](https://github.com/user-attachments/assets/1f9a71c6-2dc8-4903-84e4-6beb281ec1c6)
 
 ### Settings guide
