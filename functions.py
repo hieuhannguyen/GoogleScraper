@@ -252,6 +252,8 @@ class ReviewsScraper:
 
                 message = 'Successfully Scraped: ' + name
 
+                review_text = str(review_text)
+
             except:
                 review_text = np.nan
                 message = 'Failed to Scrape: ' + name
@@ -294,12 +296,13 @@ class s2Prompter:
             userchoice = intCheck([1,2])
 
             if userchoice == 1:
-                conduct = 1
+                conduct = True
             else:
-                conduct = 0
+                conduct = False
         else:
-            conduct = 1
-        if conduct == 1:
+            conduct = True
+
+        if conduct:
             try:
                 client = OpenAI(api_key = self.apikey)
                 response = client.chat.completions.create(
@@ -404,6 +407,7 @@ def extraction(organizationDF, process):
         pass
     else:
         organizationDF=pd.merge(organizationDF, failed, indicator=True, how='outer').query('_merge=="left_only"').drop('_merge', axis=1)
+    
     print("Scrape Complete.\n")
     print("Scraped file preview:")
     print(organizationDF.head(5))
@@ -449,6 +453,7 @@ def mainActions(organizationDF):
                 pass
             finally:
                 clear()
+                print('Please wait to initialize ratings scraping...\n')
                 results = organizationDF.apply(lambda row: scraper.scrape(row['Firm Name'], row['Location']), axis=1)
                 cols = ['Star Ratings', 'Number of Reviews', 'Google Maps URL']
                 organizationDF = concatDF(organizationDF, results, cols)
@@ -467,6 +472,7 @@ def mainActions(organizationDF):
                 pass
             finally:
                 clear()
+                print('Please wait to initialize reviews scraping...\n')
                 scraper = ReviewsScraper(setting.waitTime, setting.scrollLimit)
                 organizationDF['Reviews'] = organizationDF.apply(lambda row: scraper.scrape(row['Firm Name'], row['Google Maps URL']), axis=1)
                 organizationDF = extraction(organizationDF, 'reviews')

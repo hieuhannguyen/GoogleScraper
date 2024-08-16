@@ -1,5 +1,5 @@
 # GOOGLE REVIEWS SCRAPER & ANALYSIS TOOL
-## Version: 1.4.5
+## Version: 1.4.9
 This Python program scrapes Google reviews of interested businesses then query GPT-4o's engine to complete the following sentence: "With customers who rave about {...}, I am sure you receive many emails per week asking to buy your business." 
 
 ### Lastest update 08/15/2024
