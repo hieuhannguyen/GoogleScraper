@@ -394,7 +394,7 @@ def extraction(organizationDF, process):
     elif process=="reviews":
         failed=organizationDF[organizationDF['Reviews'].isna()]
     else:
-        failed=organizationDF[organizationDF['Email Phrases'].isna()]
+        failed=organizationDF[organizationDF['Email Phrase'].isna()]
     if failed.empty:
         pass
     else:
@@ -483,7 +483,7 @@ def mainActions(organizationDF):
                 prompter = s2Prompter(setting.tokenLimit, setting.apikey)
                 clear()
                 print('Please wait to initialize sentiment analysis...\n')
-                organizationDF['Email Phrases'] = organizationDF.apply(lambda row: prompter.prompting(row['Firm Name'], row['Reviews']), axis=1)
+                organizationDF['Email Phrase'] = organizationDF.apply(lambda row: prompter.prompting(row['Firm Name'], row['Reviews']), axis=1)
                 organizationDF = extraction(organizationDF,'sentiment')
         elif choice == 4:
             while True:
