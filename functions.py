@@ -294,40 +294,45 @@ class s2Prompter:
             userchoice = intCheck([1,2])
 
             if userchoice == 1:
-                pass
+                conduct = 1
             else:
-                return np.nan
-        try:
-            client = OpenAI(api_key = self.apikey)
-            response = client.chat.completions.create(
-            model= self.model,
-            messages = [
-                {
-                    "role":"user",
-                    "content": prompt
-                }
-            ],
-            max_tokens=self.tokenLimit
-            )
-        except:
-            print(f'Error querying for: {name}\n')
-            target=np.nan
+                conduct = 0
         else:
-            print(f'Successfully queried for: {name}\n')
-            print(f'Token usage: {response.usage.total_tokens}\n')
-            sentence=response.choices[0].message.content.strip()
+            conduct = 1
+        if conduct == 1:
+            try:
+                client = OpenAI(api_key = self.apikey)
+                response = client.chat.completions.create(
+                model= self.model,
+                messages = [
+                    {
+                        "role":"user",
+                        "content": prompt
+                    }
+                ],
+                max_tokens=self.tokenLimit
+                )
+            except:
+                print(f'Error querying for: {name}\n')
+                target=np.nan
+            else:
+                print(f'Successfully queried for: {name}\n')
+                print(f'Token usage: {response.usage.total_tokens}\n')
+                sentence=response.choices[0].message.content.strip()
 
-            startInd=sentence.find('about') + 6
-            endInd=sentence.find(', I')
-            target=sentence[startInd:endInd].strip()
+                startInd=sentence.find('about') + 6
+                endInd=sentence.find(', I')
+                target=sentence[startInd:endInd].strip()
 
-            # Handles "their"
-            if target.find('their') != -1:
-                target=target.replace('their', 'the')
+                # Handles "their"
+                if target.find('their') != -1:
+                    target=target.replace('their', 'the')
 
-            # Handles mentioning of company's name
-            if target.find(name) != -1:
-                target=target.replace(name,'your team')
+                # Handles mentioning of company's name
+                if target.find(name) != -1:
+                    target=target.replace(name,'your team')
+        else:
+            target = np.nan
 
         return target
 
