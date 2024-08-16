@@ -1,6 +1,6 @@
 # do not commit virtual environment
 .venv
 __pycache__
+.DS_Store
 input/
 output/
-.DS_Store
