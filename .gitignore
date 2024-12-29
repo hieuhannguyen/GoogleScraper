@@ -1,6 +1,3 @@
-# do not commit virtual environment
 .venv
 __pycache__
-.DS_Store
-input/
-output/
+.vscode
